@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Shopping Web</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --accent: #0b79d0;
+      --text: #222;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 0 16px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card);
+      padding: 14px;
+      border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #eee;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover { background: #055a9c; }
+    .cart {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #fff;
+      padding: 12px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      min-width: 220px;
+    }
+    .cart h3 { margin: 0 0 10px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛒 Simple Shopping Web</h1>
+  </header>
+  <div class="container">
+    <h2>Products</h2>
+    <div id="products" class="grid"></div>
+  </div>
+
+  <div class="cart">
+    <h3>Cart (<span id="cartCount">0</span>)</h3>
+    <div id="cartItems"></div>
+    <p><strong>Total: $<span id="total">0</span></strong></p>
+    <button onclick="checkout()">Checkout</button>
+  </div>
+
+  <script>
+    // Demo products
+    const products = [
+      { id: 1, name: "iPhone 15", price: 1200, img: "https://via.placeholder.com/200x140?text=iPhone" },
+      { id: 2, name: "Samsung S24", price: 1000, img: "https://via.placeholder.com/200x140?text=Samsung" },
+      { id: 3, name: "Dell XPS 13", price: 1500, img: "https://via.placeholder.com/200x140?text=Laptop" },
+      { id: 4, name: "Sony Headphones", price: 200, img: "https://via.placeholder.com/200x140?text=Headphones" }
+    ];
+
+    // Load products
+    const container = document.getElementById("products");
+    products.forEach(p => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <img src="${p.img}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <p><strong>$${p.price}</strong></p>
+        <button onclick="addToCart(${p.id})">Add to Cart</button>
+      `;
+      container.appendChild(card);
+    });
+
+    // Cart functions (saved in localStorage)
+    function getCart() {
+      return JSON.parse(localStorage.getItem("cart") || "[]");
+    }
+    function saveCart(cart) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+      updateCartUI();
+    }
+    function addToCart(id) {
+      const cart = getCart();
+      const item = cart.find(i => i.id === id);
+      if (item) item.qty++;
+      else cart.push({ id, qty: 1 });
+      saveCart(cart);
+      alert("Added to cart!");
+    }
+    function removeOne(id) {
+      const cart = getCart();
+      const item = cart.find(i => i.id === id);
+      if (!item) return;
+      item.qty--;
+      if (item.qty <= 0) {
+        const idx = cart.indexOf(item);
+        cart.splice(idx, 1);
+      }
+      saveCart(cart);
+    }
+    function updateCartUI() {
+      const cart = getCart();
+      const list = document.getElementById("cartItems");
+      list.innerHTML = "";
+      let total = 0;
+      cart.forEach(c => {
+        const p = products.find(x => x.id === c.id);
+        if (!p) return;
+        total += p.price * c.qty;
+        const div = document.createElement("div");
+        div.innerHTML = `${p.name} x ${c.qty} - $${p.price * c.qty} 
+          <button onclick="removeOne(${p.id})">-</button>`;
+        list.appendChild(div);
+      });
+      document.getElementById("cartCount").innerText = cart.reduce((s, i) => s + i.qty, 0);
+      document.getElementById("total").innerText = total;
+    }
+    function checkout() {
+      const cart = getCart();
+      if (!cart.length) return alert("Cart is empty!");
+      localStorage.removeItem("cart");
+      updateCartUI();
+      alert("✅ Thank you for your order!");
+    }
+
+    // Initialize UI
+    updateCartUI();
+  </script>
+</body>
+</html>
